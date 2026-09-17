@@ -1,0 +1,76 @@
+@startuml 05_vopc_intersection
+' ============================================================
+' VOPC (View Of Participating Classes) для прецедента
+' UC-10 «Виконати перетин таблиць».
+' B = boundary (межа), C = control (керування), E = entity (сутність).
+' Показано лише атрибути й операції, задіяні в прецеденті.
+' ============================================================
+skinparam shadowing false
+skinparam classAttributeIconSize 0
+hide empty members
+
+class MainWindow << (B,#9CC3EA) boundary >> #E3F0FC {
+  + on_intersect(): None
+}
+class IntersectionDialog << (B,#9CC3EA) boundary >> #E3F0FC {
+  - cb_first: ttk.Combobox
+  - cb_second: ttk.Combobox
+  - ed_result: ttk.Entry
+  - chk_save: ttk.Checkbutton
+  + selected(): tuple[str, str, str, bool]
+  + show_result(t: Table): None
+  + show_error(msg: str): None
+}
+class TableView << (B,#9CC3EA) boundary >> #E3F0FC {
+  + show(table: Table): None
+}
+
+class DatabaseService << (C,#F5B97A) control >> #FDEBD8 {
+  - db: Database
+  + intersect_tables(a: str, b: str, result: str, save: bool): Table
+}
+class IntersectionOperation << (C,#F5B97A) control >> #FDEBD8 {
+  + execute(tables: list[Table], result_name: str): Table
+  - _check_compatible(a: Table, b: Table): None
+}
+
+class Database << (E,#8FD19E) entity >> #E2F3E6 {
+  - tables: dict[str, Table]
+  - modified: bool
+  + get_table(name: str): Table
+  + add_table(t: Table): None
+  + mark_modified(): None
+}
+class Table << (E,#8FD19E) entity >> #E2F3E6 {
+  - name: str
+  - columns: list[Column]
+  - rows: list[Row]
+  + get_rows(): list[Row]
+  + append_row(r: Row): None
+  + is_compatible(other: Table): bool
+}
+class Column << (E,#8FD19E) entity >> #E2F3E6 {
+  - name: str
+  - dtype: DataType
+}
+class Row << (E,#8FD19E) entity >> #E2F3E6 {
+  - values: list[Any]
+  + key(columns: list[Column]): tuple
+  + copy(): Row
+}
+abstract class DataType << (E,#8FD19E) entity >> #E2F3E6 {
+  + name: str
+  + normalize(v: Any): Hashable
+}
+
+MainWindow ..> IntersectionDialog : «create»
+IntersectionDialog -right-> "1" TableView
+IntersectionDialog --> "1" DatabaseService
+DatabaseService -right-> "1" IntersectionOperation
+DatabaseService --> "0..1" Database
+IntersectionOperation ..> Table : «use», «create»
+Database "1" *-right- "0..*" Table
+Table "1" *-- "1..*" Column
+Table "1" *-- "0..*" Row
+Column "*" -right-> "1" DataType
+@enduml

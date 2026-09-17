@@ -1,0 +1,9 @@
+__pycache__/
+*.py[cod]
+.venv/
+.idea/
+*.tdb.json.tmp
+data/
+~$*
+Гайд_до_захисту.docx
+project_goal.md

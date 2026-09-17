@@ -1,0 +1,57 @@
+@startuml 08_sequence_add_row
+' ============================================================
+' Діаграма послідовності: UC-07 «Додати рядок» з валідацією
+' (UC-12) і розбором значення complexInteger (UC-13).
+' ============================================================
+skinparam shadowing false
+hide footbox
+autonumber
+
+actor "Користувач" as U
+boundary ":RowEditorDialog" as F
+control ":DatabaseService" as S
+entity ":Database" as DB
+entity "t :Table" as T
+entity "col :Column" as C
+entity "dtype :DataType" as DT
+
+U -> F ++ : ввести ["7", "3+4i", "Київ"], «Додати»
+F -> F : raw = collect_values()
+F -> S ++ : add_row("Points", raw)
+S -> DB ++ : get_table("Points")
+DB --> S -- : t
+S -> T ++ : add_row(raw)
+T -> T : validate_row(raw)
+
+loop для кожного поля i = 0 … n-1
+  T -> C ++ : parse(raw[i])
+  C -> DT ++ : parse(raw[i])
+  alt raw[i] відповідає формату типу
+    opt dtype є ComplexIntegerType
+      create entity ":ComplexInteger" as CI
+      DT -> CI : «create» ComplexInteger(3, 4)
+    end
+    DT --> C : value
+    C --> T : value
+  else помилка формату
+    DT --> C -- : ValidationError(msg)
+    C --> T -- : ValidationError(msg)
+    T -> T : errors[i] = msg
+  end
+end
+
+alt errors порожній
+  create entity ":Row" as R
+  T -> R : «create» Row(values)
+  T --> S : row
+  S -> DB : mark_modified()
+  S --> F : row
+  F -> F : close(), оновити TableView
+else є помилки
+  T --> S -- : ValidationError(errors)
+  S --> F -- : ValidationError(errors)
+  F -> F : highlight_errors(errors)
+end
+
+F --> U -- : рядок додано або помилки
+@enduml

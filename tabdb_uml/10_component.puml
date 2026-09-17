@@ -1,0 +1,48 @@
+@startuml 10_component
+' ============================================================
+' Діаграма компонентів TabDB. Лінія компонент–інтерфейс
+' означає надання інтерфейсу, пунктир «use» означає його
+' використання.
+' ============================================================
+skinparam shadowing false
+skinparam componentStyle uml2
+
+package "Застосунок TabDB (пакет tabdb)" {
+  component "GUI\n(gui)" as GUI
+  interface "IDatabaseService" as IDS
+  component "DatabaseService\n(service)" as SVC
+  interface "TableOperation" as ITO
+  interface "StorageProvider" as ISP
+  interface "ITypeRegistry" as ITR
+  component "Operations\n(operations)" as OPS
+  component "Storage\n(storage)" as STOR
+  component "Core\n(core)" as CORE
+  component "DataTypes\n(datatypes)" as TYPES
+}
+
+component "«library»\ntkinter" as TK
+component "«library»\njson (stdlib)" as JSON
+component "«library»\nre (stdlib)" as RE
+artifact "*.tdb.json" as FILE
+
+GUI ..> IDS : «use»
+IDS -- SVC
+
+SVC ..> ITO : «use»
+ITO -- OPS
+SVC ..> ISP : «use»
+ISP -- STOR
+SVC ..> ITR : «use»
+ITR -- TYPES
+STOR ..> ITR : «use»
+
+SVC ..> CORE : «use»
+OPS ..> CORE : «use»
+STOR ..> CORE : «use»
+CORE ..> TYPES : «use»
+
+GUI ..> TK : «import»
+STOR ..> JSON : «import»
+TYPES ..> RE : «import»
+STOR ..> FILE : «read / write»
+@enduml

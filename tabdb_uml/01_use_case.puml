@@ -1,0 +1,66 @@
+@startuml 01_use_case
+' ============================================================
+' Діаграма прецедентів системи TabDB
+' ============================================================
+left to right direction
+skinparam shadowing false
+skinparam usecase {
+  BackgroundColor #EAF2FB
+  BorderColor #2C3E50
+}
+
+actor "Користувач" as User
+actor "Файлова система" as FS <<system>>
+
+rectangle "Система керування табличними базами даних «TabDB»" {
+  usecase "Створити базу даних\n(UC-01)" as UC01
+  usecase "Відкрити базу даних\nз диска\n(UC-02)" as UC02
+  usecase "Зберегти базу даних\nна диск\n(UC-03)" as UC03
+  usecase "Створити таблицю\n(UC-04)" as UC04
+  usecase "Видалити таблицю\n(UC-05)" as UC05
+  usecase "Переглянути рядки\nтаблиці\n(UC-06)" as UC06
+  usecase "Додати рядок\n(UC-07)" as UC07
+  usecase "Редагувати рядок\n(UC-08)" as UC08
+  usecase "Видалити рядок\n(UC-09)" as UC09
+  usecase "Виконати перетин\nтаблиць\n(UC-10)" as UC10
+  usecase "Валідувати схему\nтаблиці\n(UC-11)" as UC11
+  usecase "Валідувати дані\nрядка\n(UC-12)" as UC12
+  usecase "Обробити значення\ncomplexInteger / complexReal\n(UC-13)" as UC13
+  usecase "Перевірити\nсумісність схем\n(UC-14)" as UC14
+  usecase "Зберегти результат\nяк нову таблицю\n(UC-15)" as UC15
+}
+
+User -- UC01
+User -- UC02
+User -- UC03
+User -- UC04
+User -- UC05
+User -- UC06
+User -- UC07
+User -- UC08
+User -- UC09
+User -- UC10
+
+UC02 -- FS
+UC03 -- FS
+
+UC04 ..> UC11 : <<include>>
+UC07 ..> UC12 : <<include>>
+UC08 ..> UC12 : <<include>>
+UC10 ..> UC14 : <<include>>
+
+' Запис "A <.. B" малює стрілку від B до A, але ставить B правіше за A
+UC12 <.. UC13 : <<extend>>
+UC10 <.. UC15 : <<extend>>
+
+note bottom of UC13
+  Умова розширення: поле таблиці
+  має тип complexInteger або complexReal
+end note
+
+note bottom of UC15
+  Умова розширення: користувач
+  позначив «зберегти результат у базі»
+end note
+
+@enduml

@@ -1,0 +1,73 @@
+@startuml 02_class_conceptual
+' ============================================================
+' Концептуальна (високорівнева) діаграма класів TabDB
+' Лише ключові класи, атрибути та зв'язки, без методів.
+' ============================================================
+skinparam shadowing false
+skinparam classAttributeIconSize 0
+hide empty members
+
+class DatabaseService <<facade>> {
+  db: Database
+  storage: StorageProvider
+}
+class Database {
+  name: str
+}
+class Table {
+  name: str
+}
+class Column {
+  name: str
+}
+class Row {
+  values: list
+}
+abstract class DataType {
+  name: str
+}
+class TypeRegistry
+class IntegerType
+class RealType
+class CharType
+class StringType
+class ComplexIntegerType
+class ComplexRealType
+class ComplexInteger <<value object>> {
+  re: int
+  im: int
+}
+class ComplexReal <<value object>> {
+  re: float
+  im: float
+}
+interface TableOperation
+class IntersectionOperation
+interface StorageProvider
+class JsonStorage
+
+DatabaseService "1" --> "0..1" Database : поточна база
+DatabaseService --> "1" StorageProvider
+DatabaseService --> "1..*" TableOperation
+DatabaseService --> "1" TypeRegistry
+
+Database "1" *-- "0..*" Table
+Table "1" *-- "1..*" Column
+Table "1" *-- "0..*" Row
+Column "*" --> "1" DataType : тип
+TypeRegistry "1" o-- "6..*" DataType
+
+DataType <|-- IntegerType
+DataType <|-- RealType
+DataType <|-- CharType
+DataType <|-- StringType
+DataType <|-- ComplexIntegerType
+DataType <|-- ComplexRealType
+ComplexIntegerType ..> ComplexInteger : «create»
+ComplexRealType ..> ComplexReal : «create»
+
+TableOperation <|.. IntersectionOperation
+IntersectionOperation ..> Table : «use»
+StorageProvider <|.. JsonStorage
+JsonStorage ..> Database : «serialize»
+@enduml

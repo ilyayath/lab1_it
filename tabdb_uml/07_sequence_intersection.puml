@@ -1,0 +1,56 @@
+@startuml 07_sequence_intersection
+' ============================================================
+' Діаграма послідовності: UC-10 «Виконати перетин таблиць».
+' Групи alt/else, loop, opt: PlantUML сам бере умову в [ ].
+' "++" активує лінію життя отримувача, "--" деактивує відправника.
+' ============================================================
+skinparam shadowing false
+hide footbox
+autonumber
+
+actor "Користувач" as U
+boundary ":IntersectionDialog" as D
+control ":DatabaseService" as S
+entity ":Database" as DB
+control ":IntersectionOperation" as OP
+entity "a :Table" as A
+entity "b :Table" as B
+
+U -> D ++ : обрати A, B, назву "A_x_B", «зберегти»
+D -> S ++ : intersect_tables("A", "B", "A_x_B", True)
+S -> DB ++ : get_table("A")
+DB --> S -- : a
+S -> DB ++ : get_table("B")
+DB --> S -- : b
+S -> OP ++ : execute([a, b], "A_x_B")
+OP -> A ++ : is_compatible(b)
+A --> OP -- : compatible: bool
+
+alt схеми несумісні
+  OP --> S : IncompatibleSchemaError
+  S --> D : IncompatibleSchemaError
+  D -> D : show_error(опис розбіжності схем)
+else схеми сумісні
+  create entity "result :Table" as R
+  OP -> R : «create» Table("A_x_B", a.columns)
+  OP -> B ++ : get_rows()
+  B --> OP -- : rows_b
+  OP -> OP : keys_b = ключі рядків rows_b
+  OP -> A ++ : get_rows()
+  A --> OP -- : rows_a
+  loop для кожного r у rows_a
+    opt r.key(cols) in keys_b and r.key(cols) not in seen
+      OP -> R : append_row(r.copy())
+    end
+  end
+  OP --> S -- : result
+  opt save = True
+    S -> DB : add_table(result)
+    S -> DB : mark_modified()
+  end
+  S --> D -- : result
+  D -> D : show_result(result)
+end
+
+D --> U -- : результат або помилка
+@enduml

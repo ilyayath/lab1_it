@@ -1,0 +1,31 @@
+@startuml 03_deployment
+' ============================================================
+' Діаграма розгортання (високий рівень): автономний
+' desktop-застосунок на ПК користувача, дані у JSON-файлах.
+' ============================================================
+skinparam shadowing false
+
+node "«device»\nРобоча станція користувача (ПК)" as PC {
+  node "«executionEnvironment»\nОС Windows 10+ / Ubuntu 22.04+ / macOS 13+" as OS {
+    node "«executionEnvironment»\nІнтерпретатор CPython 3.11+" as PY {
+      artifact "main.py\n(точка входу)" as MAIN
+      artifact "tabdb\n(пакети gui, service, core,\ndatatypes, operations, storage)" as PKG
+      artifact "«library»\ntkinter (Tcl/Tk 8.6)" as TK
+    }
+  }
+  node "«device»\nЛокальний накопичувач (SSD/HDD)" as DISK {
+    artifact "*.tdb.json\n(файли баз даних, UTF-8)" as DBF
+  }
+}
+
+MAIN ..> PKG : «import»
+PKG ..> TK : «import»
+PKG ..> DBF : «read / write»\nфайловий ввід-вивід
+
+note right of PC
+  Застосунок автономний: мережеве
+  з'єднання та сервер не потрібні.
+  Кожна база даних зберігається
+  в окремому JSON-файлі.
+end note
+@enduml

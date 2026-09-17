@@ -1,0 +1,137 @@
+@startuml 04_class_detailed
+' ============================================================
+' Детальна діаграма класів: доменне ядро (core)
+' та підсистема типів даних (datatypes).
+' ============================================================
+skinparam shadowing false
+skinparam classAttributeIconSize 0
+hide empty members
+
+class Database {
+  - name: str
+  - tables: dict[str, Table]
+  - modified: bool = False
+  + create_table(name: str, columns: list[Column]): Table
+  + add_table(table: Table): None
+  + drop_table(name: str): None
+  + get_table(name: str): Table
+  + table_names(): list[str]
+  + mark_modified(): None
+  + mark_saved(): None
+  + is_modified(): bool
+  + to_dict(): dict
+  + {static} from_dict(d: dict, reg: TypeRegistry): Database
+}
+
+class Table {
+  - name: str
+  - columns: list[Column]
+  - rows: list[Row]
+  + add_row(raw: list[str]): Row
+  + append_row(row: Row): None
+  + update_row(index: int, raw: list[str]): Row
+  + delete_row(index: int): None
+  + get_rows(): list[Row]
+  + validate_row(raw: list[str]): list[Any]
+  + is_compatible(other: Table): bool
+  + schema(): list[tuple[str, str]]
+  + to_dict(): dict
+  + {static} from_dict(d: dict, reg: TypeRegistry): Table
+}
+
+class Column {
+  - name: str
+  - dtype: DataType
+  + parse(raw: str): Any
+  + to_dict(): dict
+  + {static} from_dict(d: dict, reg: TypeRegistry): Column
+}
+
+class Row {
+  - values: list[Any]
+  + get(index: int): Any
+  + set(index: int, value: Any): None
+  + key(columns: list[Column]): tuple
+  + copy(): Row
+}
+
+abstract class DataType {
+  + name: str {readOnly}
+  + {abstract} parse(raw: str): Any
+  + to_json(value: Any): Any
+  + from_json(data: Any): Any
+  + format(value: Any): str
+  + normalize(value: Any): Hashable
+}
+
+class TypeRegistry {
+  - _types: dict[str, DataType]
+  + register(dtype: DataType): None
+  + get(name: str): DataType
+  + names(): list[str]
+  + {static} default(): TypeRegistry
+}
+
+class IntegerType {
+  + name = "integer"
+  + parse(raw: str): int
+}
+class RealType {
+  + name = "real"
+  + {static} EPS: float = 1e-9
+  + parse(raw: str): float
+  + normalize(v: float): float
+}
+class CharType {
+  + name = "char"
+  + parse(raw: str): str
+}
+class StringType {
+  + name = "string"
+  + parse(raw: str): str
+}
+class ComplexIntegerType {
+  + name = "complexInteger"
+  + parse(raw: str): ComplexInteger
+  + to_json(v: ComplexInteger): dict
+  + from_json(d: dict): ComplexInteger
+}
+class ComplexRealType {
+  + name = "complexReal"
+  + parse(raw: str): ComplexReal
+  + to_json(v: ComplexReal): dict
+  + from_json(d: dict): ComplexReal
+  + normalize(v: ComplexReal): tuple
+}
+class ComplexInteger <<frozen dataclass>> {
+  + re: int {readOnly}
+  + im: int {readOnly}
+  + {static} parse(s: str): ComplexInteger
+}
+class ComplexReal <<frozen dataclass>> {
+  + re: float {readOnly}
+  + im: float {readOnly}
+  + {static} parse(s: str): ComplexReal
+  + is_close(other: ComplexReal, eps: float): bool
+}
+class ValidationError <<exception>> {
+  + errors: dict[int, str]
+}
+
+Database "1" *-- "0..*" Table : tables
+Table "1" *-- "1..*" Column : columns
+Table "1" *-- "0..*" Row : rows
+Column "*" --> "1" DataType : dtype
+TypeRegistry "1" o-- "6..*" DataType
+
+DataType <|-- IntegerType
+DataType <|-- RealType
+DataType <|-- CharType
+DataType <|-- StringType
+DataType <|-- ComplexIntegerType
+DataType <|-- ComplexRealType
+ComplexIntegerType ..> ComplexInteger : «create»
+ComplexRealType ..> ComplexReal : «create»
+DataType .right.> ValidationError : «throws»
+
+@enduml

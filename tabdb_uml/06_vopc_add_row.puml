@@ -1,0 +1,85 @@
+@startuml 06_vopc_add_row
+' ============================================================
+' VOPC для прецедента UC-07 «Додати рядок» (разом із UC-12
+' «Валідувати дані рядка» та UC-13 «Обробити значення
+' complexInteger / complexReal»).
+' ============================================================
+skinparam shadowing false
+skinparam classAttributeIconSize 0
+hide empty members
+
+class MainWindow << (B,#9CC3EA) boundary >> #E3F0FC {
+  + on_add_row(): None
+}
+class RowEditorDialog << (B,#9CC3EA) boundary >> #E3F0FC {
+  - entries: list[ttk.Entry]
+  - hints: list[ttk.Label]
+  + collect_values(): list[str]
+  + highlight_errors(errors: dict[int, str]): None
+  + close(): None
+}
+class TableView << (B,#9CC3EA) boundary >> #E3F0FC {
+  + show(table: Table): None
+}
+
+class DatabaseService << (C,#F5B97A) control >> #FDEBD8 {
+  - db: Database
+  + add_row(table: str, raw: list[str]): Row
+}
+
+class Database << (E,#8FD19E) entity >> #E2F3E6 {
+  + get_table(name: str): Table
+  + mark_modified(): None
+}
+class Table << (E,#8FD19E) entity >> #E2F3E6 {
+  - columns: list[Column]
+  - rows: list[Row]
+  + add_row(raw: list[str]): Row
+  + validate_row(raw: list[str]): list[Any]
+}
+class Column << (E,#8FD19E) entity >> #E2F3E6 {
+  - name: str
+  - dtype: DataType
+  + parse(raw: str): Any
+}
+class Row << (E,#8FD19E) entity >> #E2F3E6 {
+  - values: list[Any]
+}
+abstract class DataType << (E,#8FD19E) entity >> #E2F3E6 {
+  + name: str
+  + {abstract} parse(raw: str): Any
+}
+class ComplexIntegerType << (E,#8FD19E) entity >> #E2F3E6 {
+  + parse(raw: str): ComplexInteger
+}
+class ComplexRealType << (E,#8FD19E) entity >> #E2F3E6 {
+  + parse(raw: str): ComplexReal
+}
+class ComplexInteger << (E,#8FD19E) entity >> #E2F3E6 {
+  + re: int
+  + im: int
+  + {static} parse(s: str): ComplexInteger
+}
+class ComplexReal << (E,#8FD19E) entity >> #E2F3E6 {
+  + re: float
+  + im: float
+  + {static} parse(s: str): ComplexReal
+}
+class ValidationError <<exception>> {
+  + errors: dict[int, str]
+}
+
+MainWindow ..> RowEditorDialog : «create»
+MainWindow -right-> "1" TableView
+RowEditorDialog --> "1" DatabaseService
+DatabaseService -right-> "0..1" Database
+Database "1" *-right- "0..*" Table
+Table "1" *-- "1..*" Column
+Table "1" *-- "0..*" Row
+Column "*" --> "1" DataType
+DataType <|-- ComplexIntegerType
+DataType <|-- ComplexRealType
+ComplexIntegerType ..> ComplexInteger : «create»
+ComplexRealType ..> ComplexReal : «create»
+DataType .right.> ValidationError : «throws»
+@enduml

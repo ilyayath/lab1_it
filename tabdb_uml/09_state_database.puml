@@ -1,0 +1,47 @@
+@startuml 09_state_database
+' ============================================================
+' Діаграма станів: життєвий цикл бази даних у сеансі роботи
+' (об'єкт Database, яким керує DatabaseService).
+' ============================================================
+skinparam shadowing false
+hide empty description
+
+state "Немає відкритої бази" as NoDB
+state "Завантаження" as Loading
+Loading : do / JsonStorage.load(path)
+
+state "Відкрита" as Open {
+  state "Змінена" as Modified
+  Modified : entry / додати «*» до заголовка вікна
+  Modified : зміна даних / mark_modified()
+
+  state "Синхронізована з файлом" as Saved
+  Saved : entry / прибрати «*» із заголовка вікна
+
+  state "Збереження" as Saving
+  Saving : do / JsonStorage.save(db, path)
+
+  state "Підтвердження закриття" as Confirm
+  Confirm : entry / діалог «Зберегти зміни?»
+}
+
+[*] --> NoDB
+NoDB --> Modified : create_database(name)
+NoDB --> Loading : open_database(path)
+Loading --> Saved : [файл коректний]
+Loading --> NoDB : [помилка читання або формату]\n/ show_error()
+
+Saved --> Modified : create_table, drop_table, add_row,\nupdate_row, delete_row, intersect(save)
+Modified --> Saving : save_database(path)
+Saving --> Saved : [успіх] / mark_saved()
+Saving --> Modified : [OSError] / show_error()
+
+Saved --> NoDB : close_database()
+Modified --> Confirm : close_database()
+Confirm --> Modified : «Скасувати»
+Confirm --> NoDB : «Не зберігати»
+Confirm --> NoDB : «Зберегти» [успіх] / save_database()
+Confirm --> Modified : «Зберегти» [помилка] / show_error()
+
+NoDB --> [*] : вихід із програми
+@enduml

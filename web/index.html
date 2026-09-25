@@ -1,0 +1,123 @@
+<!doctype html>
+<html lang="uk">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>TabDB</title>
+  <link rel="stylesheet" href="app.css">
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand">TabDB</div>
+    <div class="db-picker">
+      <select id="db-select" aria-label="База даних"></select>
+      <span id="db-state" class="badge" hidden></span>
+    </div>
+    <nav class="actions">
+      <button data-action="create-db">Нова база</button>
+      <button data-action="import-db">Імпорт</button>
+      <input id="import-file" type="file" accept=".json,application/json" hidden>
+      <span class="sep"></span>
+      <button data-action="save-db" data-needs="db" class="primary">Зберегти</button>
+      <button data-action="discard-db" data-needs="db">Скасувати зміни</button>
+      <a id="export-link" class="button" data-needs="db" download>Експорт</a>
+      <button data-action="delete-db" data-needs="db" class="danger">Видалити базу</button>
+    </nav>
+  </header>
+
+  <main class="layout">
+    <aside class="sidebar">
+      <div class="sidebar-head">
+        <h2>Таблиці</h2>
+        <button data-action="create-table" data-needs="db" title="Створити таблицю">+ Таблиця</button>
+      </div>
+      <ul id="table-list" class="table-list"></ul>
+      <button data-action="intersect" data-needs="db" class="wide">Перетин таблиць…</button>
+    </aside>
+
+    <section class="content">
+      <div id="empty" class="empty"></div>
+      <div id="table-panel" hidden>
+        <div class="table-head">
+          <div>
+            <h1 id="table-title"></h1>
+            <p id="table-schema" class="muted"></p>
+          </div>
+          <div class="table-actions">
+            <button data-action="add-row" class="primary">Додати рядок</button>
+            <button data-action="edit-row" data-needs="row">Редагувати</button>
+            <button data-action="delete-row" data-needs="row">Видалити рядок</button>
+            <button data-action="drop-table" class="danger">Видалити таблицю</button>
+          </div>
+        </div>
+        <div class="grid-wrap"><table id="grid" class="grid"></table></div>
+      </div>
+    </section>
+  </main>
+
+  <footer id="status" class="status" role="status"></footer>
+
+  <!-- Нова база -->
+  <dialog id="dlg-db">
+    <form method="dialog" class="dlg">
+      <h3>Нова база даних</h3>
+      <label>Назва бази <input name="name" required autocomplete="off"></label>
+      <p class="error" data-error></p>
+      <menu><button type="button" value="cancel">Скасувати</button><button value="ok" class="primary">Створити</button></menu>
+    </form>
+  </dialog>
+
+  <!-- Нова таблиця -->
+  <dialog id="dlg-table">
+    <form method="dialog" class="dlg">
+      <h3>Створення таблиці</h3>
+      <label>Назва таблиці <input name="name" required autocomplete="off"></label>
+      <div class="fields-head"><strong>Поля</strong><button type="button" data-add-field>+ Додати поле</button></div>
+      <ol class="fields" data-fields></ol>
+      <p class="error" data-error></p>
+      <menu><button type="button" value="cancel">Скасувати</button><button value="ok" class="primary">Створити</button></menu>
+    </form>
+  </dialog>
+
+  <!-- Рядок -->
+  <dialog id="dlg-row">
+    <form method="dialog" class="dlg" novalidate>
+      <h3 data-title></h3>
+      <div class="row-fields" data-fields></div>
+      <p class="error" data-error></p>
+      <menu><button type="button" value="cancel">Скасувати</button><button value="ok" class="primary">Зберегти</button></menu>
+    </form>
+  </dialog>
+
+  <!-- Перетин -->
+  <dialog id="dlg-intersect" class="wide-dialog">
+    <form method="dialog" class="dlg">
+      <h3>Перетин таблиць</h3>
+      <div class="two-col">
+        <label>Перша таблиця (A) <select name="left"></select></label>
+        <label>Друга таблиця (B) <select name="right"></select></label>
+      </div>
+      <label>Назва результату <input name="result" required autocomplete="off"></label>
+      <label class="check"><input type="checkbox" name="save" checked> Зберегти результат у базі як нову таблицю</label>
+      <p class="muted">Схеми таблиць мають збігатися: назви, типи та порядок полів.</p>
+      <p class="error" data-error></p>
+      <div class="preview" data-preview hidden>
+        <h4 data-preview-title></h4>
+        <div class="grid-wrap"><table class="grid" data-preview-grid></table></div>
+      </div>
+      <menu><button type="button" value="cancel">Закрити</button><button value="ok" class="primary">Виконати</button></menu>
+    </form>
+  </dialog>
+
+  <!-- Підтвердження -->
+  <dialog id="dlg-confirm">
+    <form method="dialog" class="dlg">
+      <h3 data-title></h3>
+      <p data-text></p>
+      <menu><button value="cancel">Скасувати</button><button value="ok" class="danger" data-ok></button></menu>
+    </form>
+  </dialog>
+
+  <script src="app.js"></script>
+</body>
+</html>

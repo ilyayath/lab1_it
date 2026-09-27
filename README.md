@@ -59,14 +59,6 @@ python server.py
 python -m unittest discover -s tests
 ```
 
-Тест веб-версії в браузері запускається окремо:
-
-```
-pip install -r requirements-dev.txt
-python -m playwright install firefox
-python tests/e2e_web.py
-```
-
 ## Що де лежить
 
 ```
